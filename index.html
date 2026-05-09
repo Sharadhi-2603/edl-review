@@ -1,0 +1,2490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EDL Review — Internal audit evaluation tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <style>
+/* EDL — modern fintech, restrained palette */
+
+:root {
+  --bg: #F7F8FA;
+  --surface: #FFFFFF;
+  --surface-2: #FAFBFC;
+  --ink: #0F1A2B;
+  --ink-2: #2A3346;
+  --muted: #6B7385;
+  --muted-2: #9AA3B2;
+  --line: #E5E8EE;
+  --line-2: #EEF0F4;
+  --accent: #1E4FE0;
+  --accent-soft: #EDF1FE;
+  --green: #2E9461;
+  --green-soft: #E7F2EC;
+  --amber: #C28A1B;
+  --amber-soft: #FBF1DC;
+  --red: #C04646;
+  --red-soft: #F7E4E4;
+  --shadow-1: 0 1px 2px rgba(15, 26, 43, .04), 0 1px 0 rgba(15, 26, 43, .02);
+  --shadow-2: 0 1px 2px rgba(15, 26, 43, .04), 0 8px 24px rgba(15, 26, 43, .06);
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.005em;
+}
+
+#root { min-height: 100vh; }
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Top bar ───────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 14px 28px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.brand { display: flex; align-items: center; gap: 11px; }
+.brand-mark {
+  width: 34px; height: 34px;
+  background: var(--ink);
+  color: white;
+  display: grid; place-items: center;
+  border-radius: 9px;
+}
+.brand-text { line-height: 1.15; }
+.brand-name { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+.brand-sub { font-size: 11.5px; color: var(--muted); }
+
+.seg {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 3px;
+  margin: 0 auto 0 8px;
+}
+.seg button {
+  appearance: none; border: 0; background: transparent;
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.seg button.on {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-1);
+}
+.seg button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.conf-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 500;
+  color: var(--green);
+  background: var(--green-soft);
+  border-radius: 6px;
+  padding: 5px 9px;
+}
+.ghost-btn {
+  appearance: none; background: transparent;
+  border: 1px solid var(--line);
+  font: inherit; font-size: 12.5px; font-weight: 500;
+  color: var(--ink-2);
+  padding: 6px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.ghost-btn:hover { background: var(--surface-2); border-color: var(--muted-2); }
+
+/* ── Page ──────────────────────────────────────────────── */
+.page {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 28px 80px;
+  flex: 1;
+}
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+.page-head h1 {
+  font-size: 26px; font-weight: 600; letter-spacing: -0.02em;
+  margin: 0 0 6px;
+}
+.lede { color: var(--muted); margin: 0; font-size: 13.5px; max-width: 64ch; line-height: 1.55; }
+.lede .muted { color: var(--muted-2); }
+
+.layout-toggle {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+.layout-toggle button {
+  appearance: none; border: 0; background: transparent;
+  font: inherit; font-size: 12px; font-weight: 500;
+  color: var(--muted);
+  padding: 5px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.layout-toggle button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+
+/* ── Cards ─────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+}
+
+/* ── Input view ────────────────────────────────────────── */
+.io-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+}
+.io-grid.split { grid-template-columns: 1fr 1fr; }
+.io-grid.stacked { grid-template-columns: 1fr; }
+
+/* ── Dropzone ──────────────────────────────────────────── */
+.dropzone {
+  border: 1.5px dashed var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: all .15s ease;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.dropzone:hover, .dropzone.over {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.dz-title { font-size: 13px; font-weight: 500; color: var(--ink); }
+.dropzone:hover .dz-title, .dropzone.over .dz-title { color: var(--accent); }
+.dz-sub { font-size: 11.5px; color: var(--muted); }
+
+.file-list {
+  display: flex; flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px 2px;
+  border-top: 1px solid var(--line-2);
+  margin-top: 4px;
+  padding-top: 12px;
+}
+.file-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  background: var(--surface);
+  font-size: 12.5px;
+}
+.file-icon {
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.file-meta { flex: 1; min-width: 0; }
+.file-name { font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.file-sub { font-size: 11px; color: var(--muted); }
+.x-btn {
+  appearance: none; border: 0; background: transparent;
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  color: var(--muted-2);
+  font-size: 16px; line-height: 1;
+  cursor: pointer;
+}
+.x-btn:hover { background: var(--red-soft); color: var(--red); }
+
+.io-card {
+  display: flex; flex-direction: column;
+  padding: 20px;
+  gap: 14px;
+}
+.io-card-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px;
+}
+.io-card-eyebrow {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.io-card-head h2 {
+  margin: 4px 0 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em;
+}
+.io-meta {
+  font-size: 11.5px; color: var(--muted-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-input {
+  appearance: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 9px 12px;
+  font: inherit; font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  transition: all .15s ease;
+}
+.text-input:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.doc-area {
+  appearance: none;
+  width: 100%;
+  min-height: 280px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface-2);
+  padding: 12px 14px;
+  font: 12.5px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--ink-2);
+  outline: none;
+  transition: all .15s ease;
+}
+.doc-area:focus { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 3px var(--accent-soft); }
+.checklist-area { min-height: 220px; }
+
+.hint-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  flex-wrap: wrap;
+}
+.muted { color: var(--muted); }
+.small { font-size: 11.5px; }
+
+.privacy-note {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--muted);
+}
+.privacy-note svg { color: var(--green); flex-shrink: 0; }
+
+.link-btn {
+  appearance: none; background: transparent; border: 0;
+  font: inherit; font-size: 11.5px; font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0;
+}
+.link-btn:hover { text-decoration: underline; }
+
+/* ── Run bar ───────────────────────────────────────────── */
+.run-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  gap: 20px;
+}
+.run-bar-left { color: var(--muted); }
+.error-msg {
+  color: var(--red);
+  font-size: 12.5px;
+  font-weight: 500;
+  background: var(--red-soft);
+  padding: 6px 12px;
+  border-radius: 7px;
+}
+
+.primary-btn {
+  appearance: none; border: 0;
+  background: var(--ink);
+  color: white;
+  font: inherit; font-size: 13px; font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  box-shadow: var(--shadow-1);
+  transition: all .15s ease;
+}
+.primary-btn:hover:not(:disabled) { background: #1a2438; transform: translateY(-1px); box-shadow: var(--shadow-2); }
+.primary-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.primary-btn.loading { background: var(--ink-2); }
+
+.spinner {
+  width: 13px; height: 13px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Report ────────────────────────────────────────────── */
+.report-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.report-actions { display: flex; gap: 8px; }
+
+.report-hero {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 32px;
+  padding: 28px 32px;
+  margin-bottom: 18px;
+}
+
+/* ── Dashboard hero ────────────────────────────────────── */
+.dash-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 36px;
+  padding: 32px 36px;
+  margin-bottom: 16px;
+}
+.hero-headline { display: flex; flex-direction: column; justify-content: center; }
+.big-number {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin: 8px 0 6px;
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.big-number .passed { color: var(--green); }
+.big-number .of {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+.big-sub {
+  font-size: 14px;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+.big-sub .muted { color: var(--muted); }
+
+.progress-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 18px;
+}
+.progress {
+  flex: 1;
+  height: 5px;
+  background: var(--line-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width .35s ease;
+}
+.progress-label {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hero-bars {
+  display: flex; flex-direction: column;
+  gap: 12px;
+  justify-content: center;
+}
+.band-bar-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 36px;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.band-bar-label {
+  display: flex; align-items: center; gap: 8px;
+  color: var(--ink-2);
+}
+.band-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.band-bar-track {
+  height: 8px;
+  background: var(--line-2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.band-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width .5s cubic-bezier(.2,.8,.2,1);
+}
+.band-bar-count {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* ── Pass/fail counter cards ──────────────────────────── */
+.passfail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.pf-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  box-shadow: var(--shadow-1);
+}
+.pf-card.pf-pass { border-top: 3px solid var(--green); }
+.pf-card.pf-fail { border-top: 3px solid var(--red); }
+.pf-card.pf-meta { border-top: 3px solid var(--line); }
+.pf-num {
+  font-size: 36px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.pf-card.pf-pass .pf-num { color: var(--green); }
+.pf-card.pf-fail .pf-num { color: var(--red); }
+.pf-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  margin-top: 8px;
+  color: var(--ink-2);
+}
+.pf-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* ── Bulk table ────────────────────────────────────────── */
+.table-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.search-input { width: 180px; height: 30px; }
+.filter-seg.compact button { padding: 4px 9px; font-size: 11.5px; }
+
+.bulk-table { border-top: 1px solid var(--line); }
+.bulk-row {
+  display: grid;
+  grid-template-columns: 40px 1.5fr 130px 80px 1.4fr 24px;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+.bulk-row:hover { background: var(--surface-2); }
+.bulk-row:last-child { border-bottom: 0; }
+.bulk-row.error .bn-title { color: var(--red); }
+.bulk-row.bulk-head {
+  background: var(--surface-2);
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: default;
+  padding-top: 11px; padding-bottom: 11px;
+}
+.bulk-row.bulk-head:hover { background: var(--surface-2); }
+.b-i { color: var(--muted-2); font-variant-numeric: tabular-nums; font-weight: 500; }
+.bn-title { color: var(--ink); font-weight: 500; }
+.bn-sub { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.sortable { cursor: pointer; user-select: none; }
+.sortable:hover { color: var(--ink); }
+.score-num { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.score-pct { font-size: 11px; color: var(--muted); margin-left: 1px; }
+.b-action { color: var(--muted-2); text-align: right; font-size: 16px; }
+
+.mini-stack {
+  display: flex;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line-2);
+  margin-bottom: 4px;
+}
+.mini-stack > div { height: 100%; transition: width .3s ease; }
+.mini-counts {
+  display: flex; gap: 10px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.mini-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+.error-msg-inline { color: var(--red); font-size: 11.5px; }
+.empty-row { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+
+/* ── Detail dive (wider) ───────────────────────────────── */
+.dive-wide { width: min(1100px, 100%); max-height: 90vh; }
+.detail-summary {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 28px;
+  padding: 22px 26px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+}
+.detail-score { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.ds-num {
+  font-size: 44px; font-weight: 600; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ds-num span { font-size: 20px; color: var(--muted); margin-left: 1px; }
+.detail-counts { display: flex; gap: 24px; }
+.detail-rec { border-left: 3px solid; padding: 0 16px; }
+
+.detail-filter { padding: 14px 26px 0; }
+.detail-table { padding: 8px 0 22px; overflow-y: auto; flex: 1; min-height: 0; }
+.detail-table .eval-row {
+  grid-template-columns: 36px 1.5fr 110px 1.4fr 1.4fr;
+  padding: 11px 26px;
+  cursor: default;
+}
+.detail-table .eval-row:hover { background: var(--surface-2); }
+.eyebrow {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.applicant {
+  font-size: 28px; font-weight: 600; letter-spacing: -0.02em;
+  margin: 6px 0 8px;
+}
+.hero-meta {
+  font-size: 12.5px; color: var(--muted);
+  display: flex; gap: 8px; align-items: center;
+}
+.dotsep { color: var(--muted-2); }
+
+.recommendation {
+  margin-top: 22px;
+  border-left: 3px solid;
+  padding: 4px 16px;
+}
+.rec-label {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.rec-title {
+  font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+  margin-bottom: 8px;
+}
+.rec-reasoning {
+  font-size: 13px; color: var(--ink-2); line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.hero-right {
+  display: flex; flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.dial-wrap { position: relative; width: 180px; height: 180px; }
+.dial { width: 180px; height: 180px; }
+.dial-center {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  text-align: center;
+}
+.dial-pct {
+  font-size: 38px; font-weight: 600; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.dial-pct span { font-size: 18px; color: var(--muted); margin-left: 1px; }
+.dial-band {
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+
+.stats-row {
+  display: flex; gap: 24px;
+  width: 100%;
+  justify-content: space-around;
+}
+.stat { text-align: center; }
+.stat-label { font-size: 10.5px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── Table ─────────────────────────────────────────────── */
+.table-card { padding: 0; overflow: hidden; }
+.table-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 22px 24px 16px;
+  gap: 16px;
+}
+.table-head h2 { margin: 0 0 4px; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+
+.filter-seg {
+  display: inline-flex;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+}
+.filter-seg button {
+  appearance: none; border: 0; background: transparent;
+  font: inherit; font-size: 12px; font-weight: 500;
+  color: var(--muted);
+  padding: 5px 11px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.filter-seg button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.seg-count {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  background: var(--line-2);
+  color: var(--ink-2);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.filter-seg button.on .seg-count { background: var(--accent-soft); color: var(--accent); }
+
+.eval-table {
+  border-top: 1px solid var(--line);
+}
+.eval-row {
+  display: grid;
+  grid-template-columns: 48px 1.5fr 110px 1.4fr 1.4fr;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 12.5px;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: background .12s ease;
+  line-height: 1.5;
+}
+.eval-row:hover { background: var(--surface-2); }
+.eval-row.active { background: var(--accent-soft); }
+.eval-row:last-child { border-bottom: 0; }
+.eval-head {
+  background: var(--surface-2);
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: default;
+  padding-top: 10px; padding-bottom: 10px;
+}
+.eval-head:hover { background: var(--surface-2); }
+.col-i { color: var(--muted-2); font-variant-numeric: tabular-nums; font-weight: 500; }
+.col-c { color: var(--ink-2); }
+.col-e .evidence { color: var(--ink-2); font-style: italic; }
+.col-r { color: var(--ink-2); }
+
+.eval-row.status-fully .col-i { color: var(--green); }
+.eval-row.status-partially .col-i { color: var(--amber); }
+.eval-row.status-not .col-i { color: var(--red); }
+
+/* ── Pills ─────────────────────────────────────────────── */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+/* ── Deep dive overlay ─────────────────────────────────── */
+.dive-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 26, 43, .35);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 40px;
+  animation: fadeIn .15s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.dive {
+  background: var(--surface);
+  border-radius: 14px;
+  width: min(960px, 100%);
+  max-height: 86vh;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 64px rgba(15,26,43,.25);
+  animation: pop .18s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes pop { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.dive-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 22px 26px 16px;
+  border-bottom: 1px solid var(--line);
+  gap: 20px;
+}
+.dive-head h3 { font-size: 16px; font-weight: 600; margin: 4px 0 0; letter-spacing: -0.01em; line-height: 1.4; }
+.dive-body {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 0;
+  flex: 1; min-height: 0;
+}
+.dive-col { padding: 22px 26px; overflow-y: auto; }
+.dive-col + .dive-col { border-left: 1px solid var(--line); background: var(--surface-2); }
+.dive-label {
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.dive-text {
+  margin: 0;
+  font-size: 13px; line-height: 1.6; color: var(--ink-2);
+  text-wrap: pretty;
+}
+.dive-text.evidence { font-style: italic; }
+.doc-render {
+  font: 12px/1.6 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.doc-render mark {
+  background: #FFF1B8;
+  color: var(--ink);
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+/* ── Print ─────────────────────────────────────────────── */
+.print-only { display: none; }
+@media print {
+  body { background: white; }
+  .topbar, .no-print, .layout-toggle, .filter-seg, .dive-overlay { display: none !important; }
+  .page { padding: 0; max-width: none; }
+  .card { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  .eval-row { break-inside: avoid; }
+  .print-only { display: block; }
+  .summary-card { padding: 22px; }
+  .summary-card ul { line-height: 1.8; font-size: 13px; padding-left: 20px; }
+}
+
+/* ── Responsive ────────────────────────────────────────── */
+@media (max-width: 880px) {
+  .io-grid, .io-grid.split { grid-template-columns: 1fr; }
+  .report-hero, .dash-hero { grid-template-columns: 1fr; }
+  .passfail { grid-template-columns: repeat(2, 1fr); }
+  .bulk-row { grid-template-columns: 32px 1fr 100px 60px; gap: 12px; }
+  .bulk-row .b-bar, .bulk-row .b-action { display: none; }
+  .bulk-head .b-bar, .bulk-head .b-action { display: none; }
+  .detail-summary { grid-template-columns: 1fr; }
+  .detail-table .eval-row {
+    grid-template-columns: 28px 1fr 90px;
+    grid-template-areas: "i c s" ". e e" ". r r";
+  }
+  .col-i { grid-area: i; }
+  .col-c { grid-area: c; font-weight: 500; }
+  .col-s { grid-area: s; }
+  .col-e { grid-area: e; }
+  .col-r { grid-area: r; }
+  .eval-head .col-e, .eval-head .col-r { display: none; }
+  .dive-body { grid-template-columns: 1fr; }
+  .dive-col + .dive-col { border-left: 0; border-top: 1px solid var(--line); }
+}
+
+  </style>
+
+  <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-fab{position:fixed;right:16px;bottom:16px;z-index:2147483645;
+    width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 6px 20px rgba(0,0,0,.14);
+    cursor:pointer;transition:transform .15s ease, box-shadow .15s ease;
+    appearance:none;font:inherit}
+  .twk-fab:hover{transform:translateY(-1px);
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 10px 28px rgba(0,0,0,.18)}
+  .twk-fab svg{display:block}
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    // Notify parent (Claude Design) we're available
+    try { window.parent.postMessage({ type: '__edit_mode_available' }, '*'); } catch (_) {}
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) {
+    return (
+      <button
+        className="twk-fab"
+        onClick={() => setOpen(true)}
+        title="Open settings"
+        aria-label="Open settings"
+      >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      </button>
+    );
+  }
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel" data-noncommentable=""
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value}
+             onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+// EDL — top bar, input view, dashboard, document detail
+
+function TopBar({ view, setView, hasDocs, onWipe }) {
+  return (
+    <header className="topbar">
+      <div className="brand">
+        <div className="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 19h16" />
+            <path d="M6 19V9l6-4 6 4v10" />
+            <path d="M10 19v-5h4v5" />
+          </svg>
+        </div>
+        <div className="brand-text">
+          <div className="brand-name">EDL Review</div>
+          <div className="brand-sub">Internal audit · bulk evaluation</div>
+        </div>
+      </div>
+
+      <nav className="seg">
+        <button className={view === 'input' ? 'on' : ''} onClick={() => setView('input')}>Documents</button>
+        <button className={view === 'dashboard' ? 'on' : ''} onClick={() => hasDocs && setView('dashboard')} disabled={!hasDocs}>Dashboard</button>
+      </nav>
+
+      <div className="topbar-right">
+        <span className="conf-badge" title="Files are processed in this browser session only — nothing is stored after you close the tab.">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="4" y="11" width="16" height="9" rx="2" />
+            <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+          </svg>
+          Confidential — session only
+        </span>
+        <button className="ghost-btn" onClick={onWipe}>Clear session</button>
+      </div>
+    </header>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Input view: checklist + bulk uploader
+// ─────────────────────────────────────────────────────────────────────
+
+function InputView({ checklist, setChecklist, docs, addFiles, removeDoc, generateDemoBatch, phase, runAll, error }) {
+  const fileInput = useRef(null);
+  const [dragOver, setDragOver] = useState(false);
+  const checklistCount = checklist.split(/\n+/).map(s => s.trim()).filter(Boolean).length;
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
+  };
+
+  return (
+    <main className="page">
+      <div className="page-head">
+        <div>
+          <h1>Bulk evaluate applications</h1>
+          <p className="lede">
+            Upload one or many applicant documents, then run them all against the checklist. The dashboard shows how many satisfy the criteria.
+            <span className="muted"> Files are read in this browser session only — never uploaded to a server beyond the evaluation model.</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="io-grid">
+        <section className="card io-card">
+          <div className="io-card-head">
+            <div>
+              <div className="io-card-eyebrow">Step 1</div>
+              <h2>Checklist</h2>
+            </div>
+            <div className="io-meta"><span>{checklistCount} criteria</span></div>
+          </div>
+          <textarea
+            className="doc-area checklist-area"
+            placeholder="One criterion per line…"
+            value={checklist}
+            onChange={e => setChecklist(e.target.value)}
+            spellCheck={false}
+          />
+          <div className="hint-row">
+            <span className="muted small">Numbered or bulleted lines both work. Blank lines are ignored.</span>
+            <button className="link-btn" onClick={() => setChecklist(DEFAULT_CHECKLIST)}>Reset to default</button>
+          </div>
+        </section>
+
+        <section className="card io-card">
+          <div className="io-card-head">
+            <div>
+              <div className="io-card-eyebrow">Step 2</div>
+              <h2>Applicant documents</h2>
+            </div>
+            <div className="io-meta"><span>{docs.length} file{docs.length === 1 ? '' : 's'}</span></div>
+          </div>
+
+          <div
+            className={`dropzone ${dragOver ? 'over' : ''}`}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            onClick={() => fileInput.current?.click()}
+          >
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 16V4M7 9l5-5 5 5" />
+              <path d="M5 16v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
+            </svg>
+            <div className="dz-title">Drop files here or click to browse</div>
+            <div className="dz-sub">.txt · .md · .csv · .json · .log — one document per file</div>
+            <input ref={fileInput} type="file" multiple hidden
+                   accept=".txt,.md,.csv,.tsv,.json,.log,.rtf,text/*"
+                   onChange={e => { addFiles(e.target.files); e.target.value = ''; }} />
+          </div>
+
+          <div className="hint-row">
+            <span className="privacy-note">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4z" />
+              </svg>
+              Files stay in this browser. Only document text is sent to the evaluation model.
+            </span>
+            <button className="link-btn" onClick={() => generateDemoBatch(100)}>Load 100 demo applicants</button>
+          </div>
+
+          {docs.length > 0 && (
+            <div className="file-list">
+              {docs.map(d => (
+                <div key={d.id} className="file-row">
+                  <div className="file-icon">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
+                      <path d="M14 3v6h6" />
+                    </svg>
+                  </div>
+                  <div className="file-meta">
+                    <div className="file-name">{d.applicantName}</div>
+                    <div className="file-sub">{d.name} · {(d.text.length / 1024).toFixed(1)} KB</div>
+                  </div>
+                  <button className="x-btn" onClick={() => removeDoc(d.id)} title="Remove">×</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+
+      <div className="run-bar">
+        <div className="run-bar-left">
+          {error ? <span className="error-msg">{error}</span> : (
+            <span className="muted small">
+              {docs.length > 0
+                ? `${docs.length} document${docs.length === 1 ? '' : 's'} ready · ${checklistCount} criteria each`
+                : 'Add documents to begin.'}
+            </span>
+          )}
+        </div>
+        <button
+          className={`primary-btn ${phase === 'running' ? 'loading' : ''}`}
+          onClick={runAll}
+          disabled={phase === 'running' || docs.length === 0}
+        >
+          {phase === 'running' ? (<><span className="spinner" /> Evaluating…</>) : (
+            <>Run evaluation
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
+            </>
+          )}
+        </button>
+      </div>
+    </main>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Dashboard
+// ─────────────────────────────────────────────────────────────────────
+
+function DashboardView({ docs, summary, phase, thresholds, passBand, checklistLength, onSelectDoc, onBack }) {
+  const [filter, setFilter] = useState('all'); // all | pass | fail | strong | conditional | reject | error
+  const [sortBy, setSortBy] = useState('score'); // score | name | status
+  const [sortDir, setSortDir] = useState('desc');
+  const [search, setSearch] = useState('');
+
+  const passPct = summary.total ? (summary.pass / summary.total) * 100 : 0;
+  const completed = summary.strong + summary.conditional + summary.reject + summary.errored;
+  const progressPct = summary.total ? (completed / summary.total) * 100 : 0;
+
+  const filtered = useMemo(() => {
+    let out = docs;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      out = out.filter(d => d.applicantName.toLowerCase().includes(q) || d.name.toLowerCase().includes(q));
+    }
+    if (filter === 'pass')        out = out.filter(d => d.status === 'done' && (d.scored?.band === 'strong' || (passBand === 'conditional' && d.scored?.band === 'conditional')));
+    else if (filter === 'fail')   out = out.filter(d => d.status === 'done' && d.scored?.band === 'reject' || (passBand === 'strong' && d.status === 'done' && d.scored?.band === 'conditional'));
+    else if (filter === 'strong')      out = out.filter(d => d.scored?.band === 'strong');
+    else if (filter === 'conditional') out = out.filter(d => d.scored?.band === 'conditional');
+    else if (filter === 'reject')      out = out.filter(d => d.scored?.band === 'reject');
+    else if (filter === 'error')       out = out.filter(d => d.status === 'error');
+    return out;
+  }, [docs, filter, search, passBand]);
+
+  const sorted = useMemo(() => {
+    const arr = filtered.slice();
+    arr.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'score') {
+        cmp = (a.scored?.pct ?? -1) - (b.scored?.pct ?? -1);
+      } else if (sortBy === 'name') {
+        cmp = a.applicantName.localeCompare(b.applicantName);
+      } else if (sortBy === 'status') {
+        const order = { strong: 3, conditional: 2, reject: 1, undefined: 0 };
+        cmp = (order[a.scored?.band] ?? 0) - (order[b.scored?.band] ?? 0);
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [filtered, sortBy, sortDir]);
+
+  const toggleSort = (key) => {
+    if (sortBy === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(key); setSortDir(key === 'name' ? 'asc' : 'desc'); }
+  };
+
+  return (
+    <main className="page">
+      <div className="report-head no-print">
+        <div className="crumbs"><button className="link-btn" onClick={onBack}>← Back to documents</button></div>
+        <div className="report-actions">
+          <button className="ghost-btn" onClick={() => window.print()}>Export PDF</button>
+        </div>
+      </div>
+
+      {/* Hero summary */}
+      <section className="dash-hero card">
+        <div className="hero-headline">
+          <div className="eyebrow">Portfolio summary</div>
+          <h1 className="big-number">
+            <span className="passed">{summary.pass}</span>
+            <span className="of">of</span>
+            <span>{summary.total}</span>
+          </h1>
+          <div className="big-sub">
+            applications satisfy the criteria
+            <span className="muted"> ({passPct.toFixed(0)}%)</span>
+          </div>
+          {phase === 'running' && (
+            <div className="progress-row">
+              <div className="progress"><div className="progress-fill" style={{ width: `${progressPct}%` }} /></div>
+              <span className="progress-label">{completed} / {summary.total} processed</span>
+            </div>
+          )}
+        </div>
+
+        <div className="hero-bars">
+          <BandBar label="Strong approval"      count={summary.strong}      total={summary.total} color="#2E9461" />
+          <BandBar label="Conditional approval" count={summary.conditional} total={summary.total} color="#C28A1B" />
+          <BandBar label="High risk / reject"   count={summary.reject}      total={summary.total} color="#C04646" />
+          {summary.errored > 0 && <BandBar label="Errored" count={summary.errored} total={summary.total} color="#9AA3B2" />}
+          {summary.pending > 0 && <BandBar label="Pending" count={summary.pending} total={summary.total} color="#CBD0DA" />}
+        </div>
+      </section>
+
+      {/* Pass / fail counts */}
+      <section className="passfail">
+        <div className="pf-card pf-pass">
+          <div className="pf-num">{summary.pass}</div>
+          <div className="pf-label">Satisfy criteria</div>
+          <div className="pf-sub">
+            {passBand === 'strong' ? 'Strong approval only' : 'Strong + conditional'}
+          </div>
+        </div>
+        <div className="pf-card pf-fail">
+          <div className="pf-num">{summary.fail + (passBand === 'strong' ? summary.conditional : 0)}</div>
+          <div className="pf-label">Do not satisfy</div>
+          <div className="pf-sub">
+            {passBand === 'strong' ? 'Conditional + high risk' : 'High risk only'}
+          </div>
+        </div>
+        <div className="pf-card pf-meta">
+          <div className="pf-num">{checklistLength}</div>
+          <div className="pf-label">Criteria checked</div>
+          <div className="pf-sub">Per document</div>
+        </div>
+        <div className="pf-card pf-meta">
+          <div className="pf-num">{thresholds.strong}<span style={{ fontSize: 18, color: 'var(--muted)' }}>%</span></div>
+          <div className="pf-label">Strong threshold</div>
+          <div className="pf-sub">Conditional ≥ {thresholds.conditional}%</div>
+        </div>
+      </section>
+
+      {/* Filters */}
+      <section className="card table-card">
+        <div className="table-head">
+          <div>
+            <h2>All documents</h2>
+            <p className="muted small">Click any row to see the per-criterion evaluation.</p>
+          </div>
+          <div className="table-tools">
+            <input
+              className="text-input search-input"
+              placeholder="Search applicants…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+            <div className="filter-seg compact">
+              <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>All <span className="seg-count">{summary.total}</span></button>
+              <button className={filter === 'strong' ? 'on' : ''} onClick={() => setFilter('strong')}>Strong <span className="seg-count">{summary.strong}</span></button>
+              <button className={filter === 'conditional' ? 'on' : ''} onClick={() => setFilter('conditional')}>Conditional <span className="seg-count">{summary.conditional}</span></button>
+              <button className={filter === 'reject' ? 'on' : ''} onClick={() => setFilter('reject')}>High risk <span className="seg-count">{summary.reject}</span></button>
+              {summary.errored > 0 && <button className={filter === 'error' ? 'on' : ''} onClick={() => setFilter('error')}>Errored <span className="seg-count">{summary.errored}</span></button>}
+            </div>
+          </div>
+        </div>
+
+        <div className="bulk-table">
+          <div className="bulk-row bulk-head">
+            <div className="b-i">#</div>
+            <div className="b-name sortable" onClick={() => toggleSort('name')}>Applicant {sortBy === 'name' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</div>
+            <div className="b-status sortable" onClick={() => toggleSort('status')}>Status {sortBy === 'status' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</div>
+            <div className="b-score sortable" onClick={() => toggleSort('score')}>Score {sortBy === 'score' ? (sortDir === 'asc' ? '↑' : '↓') : ''}</div>
+            <div className="b-bar">Criteria coverage</div>
+            <div className="b-action"></div>
+          </div>
+          {sorted.length === 0 ? (
+            <div className="empty-row">No documents match this filter.</div>
+          ) : sorted.map((d, idx) => (
+            <BulkRow key={d.id} doc={d} index={idx + 1} onClick={() => onSelectDoc(d.id)} />
+          ))}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function BandBar({ label, count, total, color }) {
+  const pct = total ? (count / total) * 100 : 0;
+  return (
+    <div className="band-bar-row">
+      <div className="band-bar-label">
+        <span className="band-dot" style={{ background: color }}></span>
+        {label}
+      </div>
+      <div className="band-bar-track">
+        <div className="band-bar-fill" style={{ width: `${pct}%`, background: color }} />
+      </div>
+      <div className="band-bar-count">{count}</div>
+    </div>
+  );
+}
+
+function BulkRow({ doc, index, onClick }) {
+  const status = doc.status;
+  if (status === 'queued' || status === 'running') {
+    return (
+      <div className="bulk-row" onClick={onClick}>
+        <div className="b-i">{String(index).padStart(2, '0')}</div>
+        <div className="b-name">
+          <div className="bn-title">{doc.applicantName}</div>
+          <div className="bn-sub">{doc.name}</div>
+        </div>
+        <div className="b-status"><BandPill band={status === 'running' ? 'pending' : 'pending'} /></div>
+        <div className="b-score muted">—</div>
+        <div className="b-bar">
+          {status === 'running' ? <div className="mini-spinner" /> : <span className="muted small">Queued</span>}
+        </div>
+        <div className="b-action"></div>
+      </div>
+    );
+  }
+  if (status === 'error') {
+    return (
+      <div className="bulk-row error" onClick={onClick}>
+        <div className="b-i">{String(index).padStart(2, '0')}</div>
+        <div className="b-name"><div className="bn-title">{doc.applicantName}</div><div className="bn-sub">{doc.name}</div></div>
+        <div className="b-status"><BandPill band="error" /></div>
+        <div className="b-score muted">—</div>
+        <div className="b-bar"><span className="error-msg-inline">{doc.error}</span></div>
+        <div className="b-action">›</div>
+      </div>
+    );
+  }
+  // done
+  const s = doc.scored;
+  const c = s.counts;
+  const total = s.total;
+  const fp = (c.fully / total) * 100;
+  const pp = (c.partially / total) * 100;
+  const np = (c.not / total) * 100;
+  const bandColor = s.band === 'strong' ? '#2E9461' : s.band === 'conditional' ? '#C28A1B' : '#C04646';
+
+  return (
+    <div className="bulk-row" onClick={onClick}>
+      <div className="b-i" style={{ color: bandColor }}>{String(index).padStart(2, '0')}</div>
+      <div className="b-name">
+        <div className="bn-title">{doc.applicantName}</div>
+        <div className="bn-sub">{doc.name}</div>
+      </div>
+      <div className="b-status"><BandPill band={s.band} /></div>
+      <div className="b-score">
+        <span className="score-num" style={{ color: bandColor }}>{s.pct.toFixed(0)}<span className="score-pct">%</span></span>
+      </div>
+      <div className="b-bar">
+        <div className="mini-stack" title={`${c.fully} fully · ${c.partially} partially · ${c.not} not`}>
+          <div style={{ width: `${fp}%`, background: '#2E9461' }} />
+          <div style={{ width: `${pp}%`, background: '#C28A1B' }} />
+          <div style={{ width: `${np}%`, background: '#C04646' }} />
+        </div>
+        <div className="mini-counts">
+          <span style={{ color: '#2E9461' }}>{c.fully}</span>
+          <span style={{ color: '#C28A1B' }}>{c.partially}</span>
+          <span style={{ color: '#C04646' }}>{c.not}</span>
+        </div>
+      </div>
+      <div className="b-action">›</div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Document detail overlay
+// ─────────────────────────────────────────────────────────────────────
+
+function DocDetail({ doc, onClose }) {
+  const [activeRow, setActiveRow] = useState(null);
+  const [filter, setFilter] = useState('all');
+
+  const s = doc.scored;
+  if (!s && doc.status !== 'error') {
+    return (
+      <div className="dive-overlay" onClick={onClose}>
+        <div className="dive" onClick={e => e.stopPropagation()}>
+          <div className="dive-head">
+            <div><div className="eyebrow">{doc.applicantName}</div><h3>Evaluation in progress…</h3></div>
+            <button className="ghost-btn" onClick={onClose}>Close</button>
+          </div>
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+            {doc.status === 'queued' ? 'Queued' : 'Processing…'}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (doc.status === 'error') {
+    return (
+      <div className="dive-overlay" onClick={onClose}>
+        <div className="dive" onClick={e => e.stopPropagation()}>
+          <div className="dive-head">
+            <div><div className="eyebrow">{doc.applicantName}</div><h3>Evaluation failed</h3></div>
+            <button className="ghost-btn" onClick={onClose}>Close</button>
+          </div>
+          <div style={{ padding: 32 }}>
+            <p className="error-msg">{doc.error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const bandColor = s.band === 'strong' ? '#2E9461' : s.band === 'conditional' ? '#C28A1B' : '#C04646';
+  const filtered = filter === 'all' ? doc.results : doc.results.filter(r => r.status === filter);
+
+  return (
+    <div className="dive-overlay" onClick={onClose}>
+      <div className="dive dive-wide" onClick={e => e.stopPropagation()}>
+        <div className="dive-head">
+          <div>
+            <div className="eyebrow">Evaluation report</div>
+            <h3>{doc.applicantName}</h3>
+            <div className="hero-meta" style={{ marginTop: 4 }}>
+              <span>{doc.name}</span>
+              <span className="dotsep">·</span>
+              <span>{s.total} criteria</span>
+            </div>
+          </div>
+          <button className="ghost-btn" onClick={onClose}>Close</button>
+        </div>
+
+        <div className="detail-summary">
+          <div className="detail-score" style={{ color: bandColor }}>
+            <div className="ds-num">{s.pct.toFixed(0)}<span>%</span></div>
+            <BandPill band={s.band} />
+          </div>
+          <div className="detail-counts">
+            <Stat label="Fully" value={s.counts.fully} color="#2E9461" />
+            <Stat label="Partially" value={s.counts.partially} color="#C28A1B" />
+            <Stat label="Not met" value={s.counts.not} color="#C04646" />
+            <Stat label="Points" value={`${s.points}/${s.max}`} />
+          </div>
+          <div className="detail-rec" style={{ borderColor: bandColor }}>
+            <div className="rec-label" style={{ color: bandColor }}>Recommendation</div>
+            <div className="rec-title">{s.recommendation}</div>
+            <div className="rec-reasoning">{s.reasoning}</div>
+          </div>
+        </div>
+
+        <div className="detail-filter">
+          <div className="filter-seg compact">
+            {[
+              { k: 'all', n: doc.results.length },
+              { k: 'fully', n: s.counts.fully },
+              { k: 'partially', n: s.counts.partially },
+              { k: 'not', n: s.counts.not },
+            ].map(({ k, n }) => (
+              <button key={k} className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>
+                {k === 'all' ? 'All' : k[0].toUpperCase() + k.slice(1)}<span className="seg-count">{n}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="detail-table">
+          <div className="eval-row eval-head">
+            <div className="col-i">#</div>
+            <div className="col-c">Criterion</div>
+            <div className="col-s">Status</div>
+            <div className="col-e">Evidence</div>
+            <div className="col-r">Remarks</div>
+          </div>
+          {filtered.map(r => (
+            <div key={r.i} className={`eval-row status-${r.status}`}>
+              <div className="col-i">{String(r.i).padStart(2, '0')}</div>
+              <div className="col-c">{r.criterion}</div>
+              <div className="col-s"><StatusPill status={r.status} /></div>
+              <div className="col-e">{r.evidence ? <span className="evidence">"{r.evidence}"</span> : <span className="muted small">—</span>}</div>
+              <div className="col-r">{r.remarks || <span className="muted small">—</span>}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// EDL Evaluation Tool — bulk evaluation
+
+// ─────────────────────────────────────────────────────────────────────
+// Constants & samples
+// ─────────────────────────────────────────────────────────────────────
+
+const DEFAULT_CHECKLIST = `1. Business has been operating for at least 2 years with verifiable trading history.
+2. Annual turnover between USD 250k and USD 5M for the last full financial year.
+3. Audited or management-prepared financial statements provided for the last 2 years.
+4. Positive net profit margin in the most recent financial year.
+5. Debt-to-equity ratio below 2.0x.
+6. Loan purpose clearly stated and aligned with enterprise development (capex, working capital, expansion).
+7. Realistic repayment plan with projected cash flows covering DSCR ≥ 1.25x.
+8. Collateral or security offered, with stated valuation.
+9. Owner / director KYC: ID, proof of address, tax registration.
+10. No outstanding adverse credit events (default, judgement, restructuring) in last 24 months.
+11. Compliant with sector regulation and licensing where applicable.
+12. ESG / social impact considerations addressed (jobs, supply chain, environment).`;
+
+// ─────────────────────────────────────────────────────────────────────
+// File parsing (browser-only — confidential data never leaves session)
+// ─────────────────────────────────────────────────────────────────────
+
+const TEXT_EXT = ['txt','md','csv','tsv','json','log','rtf'];
+
+async function parseFile(file) {
+  const name = file.name;
+  const ext = (name.split('.').pop() || '').toLowerCase();
+  if (TEXT_EXT.includes(ext) || file.type.startsWith('text/')) {
+    return await file.text();
+  }
+  // For pdf/docx we'd need libraries — keep it simple and require text export.
+  // Best-effort: try as text anyway.
+  try {
+    const text = await file.text();
+    // crude check that it's mostly printable
+    const printable = (text.match(/[\x20-\x7E\n\r\t]/g) || []).length;
+    if (printable / text.length > 0.85) return text;
+  } catch (_) {}
+  throw new Error(`${name}: unsupported format. Convert to .txt, .md, .csv, .json or paste as text.`);
+}
+
+function extractApplicantName(text, fallback) {
+  if (!text) return fallback;
+  const m = text.match(/APPLICANT(?:\s*NAME)?\s*[:\-]\s*([^\n\r]{2,80})/i)
+        || text.match(/COMPANY\s*[:\-]\s*([^\n\r]{2,80})/i)
+        || text.match(/BORROWER\s*[:\-]\s*([^\n\r]{2,80})/i);
+  if (m) return m[1].trim();
+  return fallback;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// LLM evaluation
+// ─────────────────────────────────────────────────────────────────────
+
+function buildPrompt(checklist, document) {
+  const items = checklist
+    .split(/\n+/)
+    .map(l => l.trim())
+    .filter(Boolean)
+    .map(l => l.replace(/^(\d+[.)]|[-•*])\s*/, ''));
+
+  const numbered = items.map((c, i) => `${i + 1}. ${c}`).join('\n');
+
+  return {
+    items,
+    prompt: `You are an objective credit analyst evaluating an Enterprise Development Loan (EDL) application against a checklist. Judge ONLY from the document — do not assume facts not present.
+
+CHECKLIST (${items.length} items):
+${numbered}
+
+APPLICANT DOCUMENT:
+"""
+${document}
+"""
+
+For EACH checklist item, return a JSON object with:
+- "i": 1-based index of the criterion
+- "status": one of "fully", "partially", "not"
+  - "fully" = clearly and completely satisfied with specific evidence
+  - "partially" = some evidence but missing detail or only loosely addressed
+  - "not" = absent, contradicted, or insufficient evidence
+- "evidence": a short verbatim quote or precise reference (max 200 chars). "" if none.
+- "remarks": one concise sentence (max 220 chars).
+
+Return ONLY a JSON array with exactly ${items.length} objects, in order. No prose, no markdown fences.`
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Keyword-based evaluator (runs entirely in the browser, no API needed)
+// Each rule looks for "strong" signals (=> fully) and "weak" signals (=> partially)
+// Falls back to "not" if neither is found. Pulls a verbatim line as evidence.
+// ─────────────────────────────────────────────────────────────────────
+
+const RULES = [
+  {
+    match: /operat|trading|since|years?\s+(of\s+)?(trading|operation)|established/i,
+    strong: [
+      { re: /operating\s+since[^\n]*?(20[0-2]\d)/i, check: m => (new Date().getFullYear() - parseInt(m[1], 10)) >= 2 },
+      { re: /(\d+)\s+years?\s+(of\s+)?(trading|operation|history)/i, check: m => parseInt(m[1], 10) >= 2 },
+    ],
+    weak: [/operating\s+since/i, /trading\s+history/i],
+  },
+  {
+    match: /turnover|revenue/i,
+    strong: [
+      { re: /turnover[^\n]*?USD\s*([\d,]+)/i, check: m => {
+          const n = parseInt(m[1].replace(/,/g, ''), 10);
+          return n >= 250000 && n <= 5000000;
+      } },
+    ],
+    weak: [/turnover[^\n]*?USD/i, /revenue[^\n]*?USD/i],
+  },
+  {
+    match: /audit|financial\s+statement|management[\s-]prepared/i,
+    strong: [/audited\s+statements?:?\s*yes/i, /independent\s+auditor/i, /audited.*FY\d{4}.*FY\d{4}/i],
+    weak: [/management[\s-]prepared/i, /financial\s+statements?/i],
+  },
+  {
+    match: /profit|margin/i,
+    strong: [
+      { re: /margin\s*([\d.]+)%/i, check: m => parseFloat(m[1]) > 0 },
+      { re: /net\s+profit[^\n]*?USD\s*([\d,]+)/i, check: m => parseInt(m[1].replace(/,/g, ''), 10) > 0 },
+    ],
+    weak: [/profit/i, /margin/i],
+  },
+  {
+    match: /debt[\s-]to[\s-]equity|d\/e|gearing/i,
+    strong: [
+      { re: /debt[\s-]to[\s-]equity:?\s*([\d.]+)x?/i, check: m => parseFloat(m[1]) < 2.0 },
+    ],
+    weak: [/debt[\s-]to[\s-]equity/i],
+  },
+  {
+    match: /loan|purpose|capex|working\s+capital|expansion/i,
+    strong: [/purpose:[^\n]*?(capex|expansion|working\s+capital)/i, /loan\s+request[^\n]*?(capex|expansion|working\s+capital)/i],
+    weak: [/loan\s+request/i, /purpose:?[^\n]*business/i],
+  },
+  {
+    match: /dscr|debt\s+service|repayment|cash[\s-]flow/i,
+    strong: [
+      { re: /dscr:?\s*([\d.]+)x?/i, check: m => parseFloat(m[1]) >= 1.25 },
+      /cash[\s-]flow\s+forecast\s+attached/i,
+    ],
+    weak: [/repayment/i, /tenor/i, /dscr/i],
+  },
+  {
+    match: /collateral|security|charge|valuation/i,
+    strong: [/collateral:[^\n]*?(valuation|charge)[^\n]*?USD\s*[\d,]+/i, /independent\s+valuation/i],
+    weak: [/collateral/i, /security/i, /equipment\s+offered/i],
+  },
+  {
+    match: /kyc|director|id\b|proof\s+of\s+address|tax\s+(registration|pin)/i,
+    strong: [/KYC:[^\n]*?ID[^\n]*?(utility|address)[^\n]*?tax/i, /director[^\n]*?ID[^\n]*?utility[^\n]*?tax/i],
+    weak: [/director[^\n]*?ID/i, /KYC/i],
+  },
+  {
+    match: /credit|crb|default|judgement|restructur/i,
+    strong: [/CRB\s+clean/i, /no\s+defaults?\s+or\s+restructur/i, /credit\s+history:[^\n]*?clean/i],
+    weak: [/restructured\s+facility/i, /credit\s+history/i],
+  },
+  {
+    match: /licens|regulat|compliant/i,
+    strong: [/licen[cs]es?\s+current\s+and\s+valid/i, /all\s+sector\s+licen[cs]es/i, /regulatory:[^\n]*?valid/i],
+    weak: [/licen[cs]ing:?\s*current/i, /licen[cs]ing/i],
+  },
+  {
+    match: /esg|environment|social|jobs|employ|community|renewable/i,
+    strong: [/employs\s+\d+\s+people/i, /community\s+sourcing/i, /renewable\s+energy/i, /ESG:[^\n]*?(employ|community|renewable)/i],
+    weak: [/ESG/i, /social\s+impact/i],
+  },
+];
+
+function tokenize(criterion) {
+  return criterion.toLowerCase().match(/[a-z][a-z0-9]+/g) || [];
+}
+
+function pickRule(criterion) {
+  // Find first rule whose match regex hits the criterion text
+  for (const r of RULES) if (r.match.test(criterion)) return r;
+  return null;
+}
+
+function findEvidence(text, patterns) {
+  for (const p of patterns) {
+    const re = p instanceof RegExp ? p : p.re;
+    const m = text.match(re);
+    if (m) {
+      // Return the matched line (verbatim quote)
+      const line = (text.split(/\n/).find(l => re.test(l)) || m[0]).trim();
+      return line.slice(0, 200);
+    }
+  }
+  return '';
+}
+
+function checkRule(rule, text) {
+  // Strong patterns can have a check() that validates extracted values
+  for (const p of rule.strong) {
+    if (p instanceof RegExp) {
+      if (p.test(text)) return { status: 'fully', pattern: p };
+    } else {
+      const m = text.match(p.re);
+      if (m && p.check(m)) return { status: 'fully', pattern: p.re };
+    }
+  }
+  for (const p of rule.weak) {
+    const re = p instanceof RegExp ? p : p.re;
+    if (re.test(text)) return { status: 'partially', pattern: re };
+  }
+  return { status: 'not', pattern: null };
+}
+
+function fallbackKeywordScan(criterion, text) {
+  // For criteria not covered by RULES — match nouns from the criterion against the document
+  const tokens = tokenize(criterion).filter(t => t.length > 4 && !['shall','must','should','where','their','which','these','those'].includes(t));
+  if (!tokens.length) return { status: 'not', evidence: '' };
+  const lowerText = text.toLowerCase();
+  const hits = tokens.filter(t => lowerText.includes(t));
+  if (hits.length >= Math.ceil(tokens.length * 0.6)) {
+    const re = new RegExp(`[^\\n]*${hits[0]}[^\\n]*`, 'i');
+    const m = text.match(re);
+    return { status: 'partially', evidence: (m?.[0] || '').trim().slice(0, 200) };
+  }
+  return { status: 'not', evidence: '' };
+}
+
+function explainStatus(criterion, status) {
+  const short = criterion.length > 80 ? criterion.slice(0, 77) + '...' : criterion;
+  if (status === 'fully') return `Document provides clear evidence for: ${short}`;
+  if (status === 'partially') return `Some indication present but evidence is incomplete or unverified.`;
+  return `No evidence found in the document for this criterion.`;
+}
+
+async function evaluateOne(checklist, document) {
+  const { items } = buildPrompt(checklist, document);
+  // Simulate a small async delay so the UI shows queued -> running -> done transitions
+  await new Promise(r => setTimeout(r, 80 + Math.random() * 220));
+
+  return items.map((criterion, idx) => {
+    const rule = pickRule(criterion);
+    let status, evidence;
+    if (rule) {
+      const res = checkRule(rule, document);
+      status = res.status;
+      evidence = res.pattern ? findEvidence(document, [res.pattern]) : '';
+      if (!evidence && status !== 'not') {
+        evidence = findEvidence(document, [...rule.strong, ...rule.weak]);
+      }
+    } else {
+      const fb = fallbackKeywordScan(criterion, document);
+      status = fb.status;
+      evidence = fb.evidence;
+    }
+    return {
+      i: idx + 1,
+      criterion,
+      status,
+      evidence,
+      remarks: explainStatus(criterion, status),
+    };
+  });
+}
+
+// Run evaluations in parallel pools
+async function evaluateBatch(checklist, docs, { concurrency = 3, onUpdate } = {}) {
+  const queue = docs.map((d, idx) => ({ d, idx }));
+  const results = new Array(docs.length).fill(null);
+  let active = 0, next = 0;
+
+  return new Promise((resolve) => {
+    const pump = () => {
+      while (active < concurrency && next < queue.length) {
+        const { d, idx } = queue[next++];
+        active++;
+        onUpdate?.(idx, { status: 'running' });
+        evaluateOne(checklist, d.text)
+          .then(r => {
+            results[idx] = { ok: true, results: r };
+            onUpdate?.(idx, { status: 'done', results: r });
+          })
+          .catch(e => {
+            results[idx] = { ok: false, error: e?.message || String(e) };
+            onUpdate?.(idx, { status: 'error', error: e?.message || String(e) });
+          })
+          .finally(() => {
+            active--;
+            if (next >= queue.length && active === 0) resolve(results);
+            else pump();
+          });
+      }
+    };
+    pump();
+    if (queue.length === 0) resolve(results);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Scoring
+// ─────────────────────────────────────────────────────────────────────
+
+function scoreResults(results, thresholds) {
+  const total = results.length;
+  const counts = { fully: 0, partially: 0, not: 0 };
+  results.forEach(r => { counts[r.status]++; });
+  const points = counts.fully * 2 + counts.partially * 1;
+  const max = total * 2;
+  const pct = max ? (points / max) * 100 : 0;
+  let band, recommendation, reasoning;
+  if (pct >= thresholds.strong) {
+    band = 'strong';
+    recommendation = 'Strong Approval';
+    reasoning = `Score of ${pct.toFixed(1)}% exceeds the ${thresholds.strong}% threshold. Documentation is substantively complete and risk indicators are within tolerance.`;
+  } else if (pct >= thresholds.conditional) {
+    band = 'conditional';
+    recommendation = 'Conditional Approval — Needs Review';
+    reasoning = `Score of ${pct.toFixed(1)}% sits between ${thresholds.conditional}% and ${thresholds.strong}%. Approval is plausible but contingent on resolving the partial / missing items.`;
+  } else {
+    band = 'reject';
+    recommendation = 'Reject — High Risk';
+    reasoning = `Score of ${pct.toFixed(1)}% is below the ${thresholds.conditional}% threshold. Material gaps make this application unsuitable in its current form.`;
+  }
+  return { total, counts, points, max, pct, band, recommendation, reasoning };
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// UI primitives
+// ─────────────────────────────────────────────────────────────────────
+
+const StatusPill = ({ status }) => {
+  const map = {
+    fully:     { label: 'Fully',     bg: '#E7F2EC', fg: '#1F6B43', dot: '#2E9461' },
+    partially: { label: 'Partially', bg: '#FBF1DC', fg: '#7A5310', dot: '#C28A1B' },
+    not:       { label: 'Not',       bg: '#F7E4E4', fg: '#8B2A2A', dot: '#C04646' },
+    pending:   { label: 'Pending',   bg: '#EEF0F4', fg: '#4B5466', dot: '#9AA3B2' },
+  };
+  const s = map[status] || map.pending;
+  return (
+    <span className="pill" style={{ background: s.bg, color: s.fg }}>
+      <span className="pill-dot" style={{ background: s.dot }}></span>
+      {s.label}
+    </span>
+  );
+};
+
+const BandPill = ({ band }) => {
+  const map = {
+    strong:      { label: 'Strong approval', bg: '#E7F2EC', fg: '#1F6B43' },
+    conditional: { label: 'Conditional',     bg: '#FBF1DC', fg: '#7A5310' },
+    reject:      { label: 'High risk',       bg: '#F7E4E4', fg: '#8B2A2A' },
+    pending:     { label: 'Pending',         bg: '#EEF0F4', fg: '#4B5466' },
+    error:       { label: 'Error',           bg: '#F7E4E4', fg: '#8B2A2A' },
+  };
+  const s = map[band] || map.pending;
+  return <span className="pill" style={{ background: s.bg, color: s.fg }}>{s.label}</span>;
+};
+
+const Stat = ({ label, value, sub, color }) => (
+  <div className="stat">
+    <div className="stat-label">{label}</div>
+    <div className="stat-value" style={color ? { color } : null}>{value}</div>
+    {sub ? <div className="stat-sub">{sub}</div> : null}
+  </div>
+);
+
+// ─────────────────────────────────────────────────────────────────────
+// Main app
+// ─────────────────────────────────────────────────────────────────────
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "strongThreshold": 80,
+  "conditionalThreshold": 50,
+  "concurrency": 3,
+  "passBand": "conditional"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  const [checklist, setChecklist] = useState(DEFAULT_CHECKLIST);
+  const [docs, setDocs] = useState([]); // {id, name, text, applicantName, status, results, error, scored}
+  const [phase, setPhase] = useState('idle'); // idle | running | done
+  const [view, setView] = useState('input'); // input | dashboard
+  const [activeDocId, setActiveDocId] = useState(null);
+  const [globalError, setGlobalError] = useState('');
+
+  const thresholds = useMemo(() => ({
+    strong: Math.max(Number(t.strongThreshold) || 80, Number(t.conditionalThreshold) || 50),
+    conditional: Math.min(Number(t.conditionalThreshold) || 50, Number(t.strongThreshold) || 80),
+  }), [t.strongThreshold, t.conditionalThreshold]);
+
+  // Re-score whenever thresholds change
+  const scoredDocs = useMemo(() => {
+    return docs.map(d => {
+      if (d.status === 'done' && d.results) {
+        return { ...d, scored: scoreResults(d.results, thresholds) };
+      }
+      return d;
+    });
+  }, [docs, thresholds]);
+
+  // Pass band: which bands count as "satisfies criteria"
+  // 'strong' = only strong passes; 'conditional' = strong + conditional pass
+  const passBand = t.passBand === 'strong' ? 'strong' : 'conditional';
+
+  const summary = useMemo(() => {
+    const total = scoredDocs.length;
+    let strong = 0, conditional = 0, reject = 0, errored = 0, pending = 0;
+    for (const d of scoredDocs) {
+      if (d.status === 'error') errored++;
+      else if (d.status !== 'done') pending++;
+      else if (d.scored?.band === 'strong') strong++;
+      else if (d.scored?.band === 'conditional') conditional++;
+      else reject++;
+    }
+    const pass = passBand === 'strong' ? strong : strong + conditional;
+    const fail = reject;
+    return { total, strong, conditional, reject, errored, pending, pass, fail };
+  }, [scoredDocs, passBand]);
+
+  // ── File handling ─────────────────────────────────────────────────
+  const addFiles = useCallback(async (fileList) => {
+    setGlobalError('');
+    const arr = Array.from(fileList || []);
+    if (!arr.length) return;
+    const prepared = [];
+    const errs = [];
+    for (const f of arr) {
+      try {
+        const text = await parseFile(f);
+        prepared.push({
+          id: `${f.name}-${f.size}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          name: f.name,
+          text,
+          applicantName: extractApplicantName(text, f.name.replace(/\.[^.]+$/, '')),
+          status: 'queued',
+          results: null,
+          error: null,
+        });
+      } catch (e) {
+        errs.push(e.message || String(e));
+      }
+    }
+    if (errs.length) setGlobalError(errs.join(' · '));
+    if (prepared.length) setDocs(prev => [...prev, ...prepared]);
+  }, []);
+
+  const generateDemoBatch = useCallback((n = 100) => {
+    const sectors = ['Agro-processing','Logistics','Retail','Manufacturing','ICT services','Hospitality','Healthcare','Construction','Education','Wholesale','Tailoring','Bakery'];
+    const firstNames = ['Jane','Samuel','Aisha','Kwame','Fatima','David','Grace','John','Amina','Peter','Lucy','Daniel','Mary','Joseph','Rose'];
+    const lastNames = ['Mwangi','Otieno','Adeyemi','Mensah','Kone','Banda','Diallo','Okoye','Sibanda','Achieng','Wamala','Nakato','Ngugi'];
+    const surnames = ['Foods','Logistics','Traders','Industries','Holdings','Ventures','Enterprises','Group','Solutions','Partners','Works','Co'];
+    const adjectives = ['Harvest','Bluepeak','Sunrise','Highland','Riverside','Greenfield','Summit','Pioneer','Oak','Ironwood','Cedar','Beacon','Coastal','Plateau'];
+    const rand = (a) => a[Math.floor(Math.random() * a.length)];
+    const ri = (lo, hi) => Math.floor(lo + Math.random() * (hi - lo + 1));
+
+    const newDocs = [];
+    for (let i = 0; i < n; i++) {
+      const tier = Math.random();
+      // distribution: 35% strong, 40% borderline, 25% weak
+      const profile = tier < 0.35 ? 'strong' : tier < 0.75 ? 'borderline' : 'weak';
+      const name = `${rand(adjectives)} ${rand(surnames)} ${i + 1 < 10 ? '0' : ''}${i + 1}`;
+      const sector = rand(sectors);
+      const dir1 = `${rand(firstNames)} ${rand(lastNames)}`;
+      const dir2 = `${rand(firstNames)} ${rand(lastNames)}`;
+
+      let text;
+      if (profile === 'strong') {
+        const turnover = ri(800, 4500) * 1000;
+        const margin = (8 + Math.random() * 7).toFixed(1);
+        const profit = Math.round(turnover * margin / 100);
+        const de = (0.4 + Math.random() * 0.9).toFixed(2);
+        const dscr = (1.4 + Math.random() * 0.6).toFixed(2);
+        const loan = ri(150, 800) * 1000;
+        const collat = Math.round(loan * (1.4 + Math.random() * 0.6));
+        text = `APPLICANT: ${name}
+Sector: ${sector} | Operating since: ${ri(2017, 2022)} (${ri(3, 8)} years trading history)
+FY2024 Turnover: USD ${turnover.toLocaleString()} | FY2023 Turnover: USD ${Math.round(turnover * 0.85).toLocaleString()}
+FY2024 Net profit: USD ${profit.toLocaleString()} (margin ${margin}%)
+Debt-to-equity: ${de}x
+Audited statements: Yes — independent auditor, FY2023 and FY2024 attached.
+Loan request: USD ${loan.toLocaleString()} | Tenor: ${ri(36, 60)} months | Purpose: capex / expansion of ${sector.toLowerCase()} operations.
+Projected DSCR: ${dscr}x. Cash-flow forecast attached.
+Collateral: First charge over property, independent valuation USD ${collat.toLocaleString()}.
+KYC: Director ${dir1} — ID, utility bill, tax registration. Director ${dir2} — ID, utility bill, tax registration.
+Credit history: CRB clean. No defaults or restructurings in last 36 months.
+Regulatory: All sector licences current and valid.
+ESG: Employs ${ri(20, 80)} people; community sourcing programme; renewable energy installed.`;
+      } else if (profile === 'borderline') {
+        const turnover = ri(180, 700) * 1000;
+        const margin = (1 + Math.random() * 4).toFixed(1);
+        const profit = Math.round(turnover * margin / 100);
+        const de = (1.4 + Math.random() * 1.0).toFixed(2);
+        const loan = ri(80, 250) * 1000;
+        text = `APPLICANT: ${name}
+Sector: ${sector} | Operating since: ${ri(2022, 2023)} (${ri(2, 3)} years)
+Turnover FY2024: USD ${turnover.toLocaleString()}
+Net profit FY2024: USD ${profit.toLocaleString()} (margin ${margin}%)
+Prior year financials: management-prepared only, not audited.
+Debt-to-equity: ${de}x
+Loan request: USD ${loan.toLocaleString()} for working capital.
+Repayment tenor: ${ri(24, 36)} months. DSCR not explicitly modelled.
+Collateral: equipment offered, owner-estimated value USD ${Math.round(loan * 0.6).toLocaleString()} (no independent valuation).
+KYC: Director ${dir1} — ID provided. Proof of address not attached. Tax PIN provided.
+Credit history: One restructured facility in 2024, now current.
+Licensing: current.
+ESG: not addressed.`;
+      } else {
+        const turnover = ri(20, 180) * 1000;
+        const loan = ri(100, 400) * 1000;
+        text = `APPLICANT: ${name}
+Sector: ${sector} | Operating since: ${ri(2024, 2025)} (~${ri(8, 16)} months)
+Turnover: approximately USD ${turnover.toLocaleString()} (self-reported, no statements attached).
+No audited or management accounts provided.
+Loan request: USD ${loan.toLocaleString()}. Purpose described as "business growth".
+No repayment schedule or cash-flow projection submitted.
+No collateral offered.
+KYC: Director ${dir1} — ID only. No proof of address, no tax registration.
+CRB: shows ${ri(1, 2)} unresolved default(s) with digital lender(s) in 2025.
+No mention of licensing or ESG.`;
+      }
+
+      newDocs.push({
+        id: `demo-${Date.now()}-${i}`,
+        name: `${name.replace(/\s+/g, '_')}.txt`,
+        text,
+        applicantName: name,
+        status: 'queued',
+        results: null,
+        error: null,
+      });
+    }
+    setDocs(newDocs);
+    setGlobalError('');
+  }, []);
+
+  const removeDoc = (id) => setDocs(prev => prev.filter(d => d.id !== id));
+
+  const updateDoc = useCallback((idx, patch) => {
+    setDocs(prev => {
+      const next = prev.slice();
+      if (next[idx]) next[idx] = { ...next[idx], ...patch };
+      return next;
+    });
+  }, []);
+
+  const runAll = async () => {
+    if (!docs.length) { setGlobalError('Add some documents first.'); return; }
+    if (!checklist.trim()) { setGlobalError('Provide a checklist.'); return; }
+    setGlobalError('');
+    setPhase('running');
+    setView('dashboard');
+    // mark all queued as queued (reset)
+    setDocs(prev => prev.map(d => ({ ...d, status: 'queued', results: null, error: null })));
+
+    // Snapshot for batch — but we need the latest list
+    const snapshot = docs.map(d => ({ id: d.id, text: d.text }));
+
+    await evaluateBatch(checklist, snapshot, {
+      concurrency: Math.max(1, Math.min(10, Number(t.concurrency) || 3)),
+      onUpdate: (idx, info) => {
+        if (info.status === 'running') {
+          updateDoc(idx, { status: 'running' });
+        } else if (info.status === 'done') {
+          updateDoc(idx, { status: 'done', results: info.results });
+        } else if (info.status === 'error') {
+          updateDoc(idx, { status: 'error', error: info.error });
+        }
+      }
+    });
+    setPhase('done');
+  };
+
+  const wipe = () => {
+    if (!confirm('Clear all uploaded documents and results from this session? This cannot be undone.')) return;
+    setDocs([]);
+    setPhase('idle');
+    setGlobalError('');
+    setView('input');
+  };
+
+  const activeDoc = activeDocId ? scoredDocs.find(d => d.id === activeDocId) : null;
+
+  return (
+    <div className="app">
+      <TopBar
+        view={view}
+        setView={setView}
+        hasDocs={docs.length > 0}
+        onWipe={wipe}
+      />
+
+      {view === 'input' && (
+        <InputView
+          checklist={checklist} setChecklist={setChecklist}
+          docs={docs}
+          addFiles={addFiles}
+          removeDoc={removeDoc}
+          generateDemoBatch={generateDemoBatch}
+          phase={phase} runAll={runAll}
+          error={globalError}
+        />
+      )}
+
+      {view === 'dashboard' && (
+        <DashboardView
+          docs={scoredDocs}
+          summary={summary}
+          phase={phase}
+          thresholds={thresholds}
+          passBand={passBand}
+          checklistLength={checklist.split(/\n+/).map(s => s.trim()).filter(Boolean).length}
+          onSelectDoc={(id) => setActiveDocId(id)}
+          onBack={() => setView('input')}
+        />
+      )}
+
+      {activeDoc && (
+        <DocDetail
+          doc={activeDoc}
+          onClose={() => setActiveDocId(null)}
+        />
+      )}
+
+      <TweaksPanel>
+        <TweakSection label="Approval thresholds" />
+        <TweakSlider label="Strong approval ≥" value={t.strongThreshold} min={50} max={95} step={1} unit="%"
+                     onChange={(v) => setTweak('strongThreshold', v)} />
+        <TweakSlider label="Conditional ≥" value={t.conditionalThreshold} min={20} max={75} step={1} unit="%"
+                     onChange={(v) => setTweak('conditionalThreshold', v)} />
+        <TweakSection label="Pass criterion" />
+        <TweakRadio label='"Satisfies criteria" =' value={t.passBand}
+                    options={['strong', 'conditional']}
+                    onChange={(v) => setTweak('passBand', v)} />
+        <TweakSection label="Performance" />
+        <TweakSlider label="Concurrent evals" value={t.concurrency} min={1} max={8} step={1}
+                     onChange={(v) => setTweak('concurrency', v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+  </script>
+</body>
+</html>
